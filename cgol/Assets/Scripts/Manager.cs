@@ -43,14 +43,5 @@ namespace Assets.Scripts
 
             return result;
         }
-
-        private void Update()
-        {
-
-            if (GameState == GameStateEnum.AcceptInput && Input.GetKeyDown(KeyCode.Return))
-            {
-                GameState = GameStateEnum.Run;
-            }
-        }
     }
 }

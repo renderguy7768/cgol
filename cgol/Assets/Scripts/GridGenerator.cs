@@ -63,13 +63,22 @@ namespace Assets.Scripts
                     cellTransform.rotation = Quaternion.identity;
                     cellTransform.localScale = CellScale;
 
-                    _cells[row, column].Initialize();
+                    _cells[row, column].Initialize(row, column, Width, Height);
 
                     yield return null;
                 }
             }
 
             Manager.GameState = GameStateEnum.AcceptInput;
+        }
+
+        private void Update()
+        {
+
+            if (Manager.GameState == GameStateEnum.AcceptInput && Input.GetKeyDown(KeyCode.Return))
+            {
+                Manager.GameState = GameStateEnum.Run;
+            }
         }
     }
 }
