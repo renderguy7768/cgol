@@ -53,11 +53,13 @@ namespace Assets.Scripts
         private void Start()
         {
             // Calculate cell offsets
-            if (_gameState == GameState.Invalid) return;
-            _xOffset = Width - Mathf.FloorToInt(0.5f * (Width - 1) + 1.0f);
-            _yOffset = Height - Mathf.FloorToInt(0.5f * (Height - 1) + 1.0f);
-            StartCoroutine(PopulateGrid());
-            CameraController.SetupCamera.Invoke(Width, Height);
+            if (_gameState == GameState.Wait)
+            {
+                _xOffset = Width - Mathf.FloorToInt(0.5f * (Width - 1) + 1.0f);
+                _yOffset = Height - Mathf.FloorToInt(0.5f * (Height - 1) + 1.0f);
+                StartCoroutine(PopulateGrid());
+                CameraController.SetupCamera.Invoke(Width, Height);
+            }
         }
 
         private IEnumerator PopulateGrid()
