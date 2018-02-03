@@ -12,7 +12,6 @@ namespace Assets.Scripts
         [Tooltip("Grid Height (Number of Rows)")]
         public int Height;
 
-        private const byte NumberOfCellMaterials = 2;
         private static readonly Vector3 CellScale = Vector3.one * 0.8f;
 
         private GameObject _cellPrefab;
@@ -45,7 +44,12 @@ namespace Assets.Scripts
                 Debug.LogError("Cell prefab not found");
                 return;
             }
-            _cellMaterials = new Material[NumberOfCellMaterials];
+
+            _cellMaterials = new[]
+            {
+                Resources.Load<Material>("Materials/Dead"),
+                Resources.Load<Material>("Materials/Alive")
+            };
             _cells = new Transform[Height, Width];
             _gameState = GameState.Wait;
         }
@@ -69,10 +73,11 @@ namespace Assets.Scripts
                 for (var column = 0; column < Width; column++)
                 {
                     _cells[row, column] = Instantiate(_cellPrefab, transform).GetComponent<Transform>();
-
+                    _cells[row, column].gameObject.name = "Cell (" + row + "," + column + ")";
                     _cells[row, column].position = new Vector3(column - _xOffset, row - _yOffset, 0.0f);
                     _cells[row, column].rotation = Quaternion.identity;
                     _cells[row, column].localScale = CellScale;
+                    _cells[row, column].GetComponent<MeshRenderer>().sharedMaterial = _cellMaterials[0];
 
                     yield return null;
                 }
