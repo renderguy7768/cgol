@@ -1,4 +1,4 @@
-using System;
+using System.Collections;
 using UnityEngine;
 using UnityEngine.Events;
 
@@ -10,9 +10,12 @@ namespace Assets.Scripts
         public class SetupCameraEvent : UnityEvent<int, int> { }
 
         public static SetupCameraEvent SetupCamera;
+        private Coroutine _resetCameraCoroutine;
+        private bool _isCameraResetting;
         private Camera _camera;
         private Vector3 _originalPostion;
         private MinMax<float> _orthographicSize;
+        private MinMax<float> _resetCameraSpeed;
         private Bounds _bounds;
         private Vector3 _initialMousePosition;
 
@@ -32,6 +35,9 @@ namespace Assets.Scripts
             {
                 SetupCamera = new SetupCameraEvent();
             }
+
+            _resetCameraSpeed.Min = 0.01f;
+            _resetCameraSpeed.Max = 5.0f;
         }
         private void OnEnable()
         {
@@ -60,7 +66,11 @@ namespace Assets.Scripts
         private void Update()
         {
             if (Manager.GameState != GameStateEnum.AcceptInput && Manager.GameState != GameStateEnum.Run) return;
-            ResetCamera();
+            if (!_isCameraResetting && Input.GetKeyDown(KeyCode.R))
+            {
+                _isCameraResetting = true;
+                _resetCameraCoroutine = StartCoroutine(ResetCamera());
+            }
             DetermineZoomDelta();
         }
 
@@ -71,14 +81,25 @@ namespace Assets.Scripts
             PanCamera();
         }
 
-        private void ResetCamera()
+        private IEnumerator ResetCamera()
         {
-            if (!Input.GetKeyDown(KeyCode.R)) return;
-            transform.position = _originalPostion;
-            transform.rotation = Quaternion.identity;
-            _camera.orthographicSize = _orthographicSize.Max;
+            var time = 0.0f;
+            yield return new WaitUntil(() =>
+            {
+                time += Time.smoothDeltaTime * Mathf.Lerp(_resetCameraSpeed.Min, _resetCameraSpeed.Max, Time.smoothDeltaTime);
+                transform.position = Vector3.Lerp(transform.position, _originalPostion, time);
+                transform.rotation = Quaternion.Lerp(transform.rotation, Quaternion.identity, time);
+                _camera.orthographicSize = Mathf.Lerp(_camera.orthographicSize, _orthographicSize.Max, time);
+                return time > 1.0f;
+            });
+            UpdateBoundsAfterReset();
+        }
+
+        private void UpdateBoundsAfterReset()
+        {
             _bounds.Update(_camera);
             transform.position = _bounds.ClampCamera(transform.position);
+            _isCameraResetting = false;
         }
 
         private void DetermineZoomDelta()
@@ -103,6 +124,11 @@ namespace Assets.Scripts
         private void ZoomCamera()
         {
             if (!(Mathf.Abs(_zoomInputDelta) > 0.0f)) return;
+            if (_isCameraResetting && _resetCameraCoroutine != null)
+            {
+                StopCoroutine(_resetCameraCoroutine);
+                UpdateBoundsAfterReset();
+            }
             _camera.orthographicSize += _zoomInputDelta * Time.smoothDeltaTime * ZoomSpeed;
             _camera.orthographicSize =
                 Mathf.Clamp(_camera.orthographicSize, _orthographicSize.Min, _orthographicSize.Max);
@@ -115,6 +141,11 @@ namespace Assets.Scripts
         {
             if (Input.GetMouseButtonDown(0))
             {
+                if (_isCameraResetting && _resetCameraCoroutine != null)
+                {
+                    StopCoroutine(_resetCameraCoroutine);
+                    UpdateBoundsAfterReset();
+                }
                 _initialMousePosition = Input.mousePosition;
             }
             else if (Input.GetMouseButton(0))
