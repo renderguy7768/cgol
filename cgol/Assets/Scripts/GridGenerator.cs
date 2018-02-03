@@ -14,15 +14,9 @@ namespace Assets.Scripts
 
         private static readonly Vector3 CellScale = Vector3.one * 0.8f;
 
-        private GameObject _cellPrefab;
-        private Material[] _cellMaterials;
-        private Transform[,] _cells;
+        private Cell[,] _cells;
         private int _xOffset;
         private int _yOffset;
-
-        private enum GameState : byte { Invalid, Wait, Run }
-
-        private GameState _gameState;
 
         private void Awake()
         {
@@ -31,33 +25,22 @@ namespace Assets.Scripts
 
             if (Width < 3 || Height < 3)
             {
-                _gameState = GameState.Invalid;
+                Manager.GameState = GameStateEnum.Invalid;
                 Debug.LogError("Invalid width or height");
                 return;
             }
 
-            _cellPrefab = Resources.Load<GameObject>("Prefabs/Cell");
-            Assert.IsNotNull(_cellPrefab, "Cell prefab not found");
-            if (_cellPrefab == null)
+            if (Manager.Initialize())
             {
-                _gameState = GameState.Invalid;
-                Debug.LogError("Cell prefab not found");
-                return;
+                _cells = new Cell[Height, Width];
+                Manager.GameState = GameStateEnum.Wait;
             }
-
-            _cellMaterials = new[]
-            {
-                Resources.Load<Material>("Materials/Dead"),
-                Resources.Load<Material>("Materials/Alive")
-            };
-            _cells = new Transform[Height, Width];
-            _gameState = GameState.Wait;
         }
 
         private void Start()
         {
             // Calculate cell offsets
-            if (_gameState == GameState.Wait)
+            if (Manager.GameState == GameStateEnum.Wait)
             {
                 _xOffset = Width - Mathf.FloorToInt(0.5f * (Width - 1) + 1.0f);
                 _yOffset = Height - Mathf.FloorToInt(0.5f * (Height - 1) + 1.0f);
@@ -72,16 +55,21 @@ namespace Assets.Scripts
             {
                 for (var column = 0; column < Width; column++)
                 {
-                    _cells[row, column] = Instantiate(_cellPrefab, transform).GetComponent<Transform>();
+                    _cells[row, column] = Instantiate(Manager.CellPrefab, transform).GetComponent<Cell>();
                     _cells[row, column].gameObject.name = "Cell (" + row + "," + column + ")";
-                    _cells[row, column].position = new Vector3(column - _xOffset, row - _yOffset, 0.0f);
-                    _cells[row, column].rotation = Quaternion.identity;
-                    _cells[row, column].localScale = CellScale;
-                    _cells[row, column].GetComponent<MeshRenderer>().sharedMaterial = _cellMaterials[0];
+
+                    var cellTransform = _cells[row, column].transform;
+                    cellTransform.position = new Vector3(column - _xOffset, row - _yOffset, 0.0f);
+                    cellTransform.rotation = Quaternion.identity;
+                    cellTransform.localScale = CellScale;
+
+                    _cells[row, column].Initialize();
 
                     yield return null;
                 }
             }
+
+            Manager.GameState = GameStateEnum.AcceptInput;
         }
     }
 }

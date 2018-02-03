@@ -59,12 +59,14 @@ namespace Assets.Scripts
 
         private void Update()
         {
+            if (Manager.GameState != GameStateEnum.AcceptInput && Manager.GameState != GameStateEnum.Run) return;
             ResetCamera();
             DetermineZoomDelta();
         }
 
         private void LateUpdate()
         {
+            if (Manager.GameState != GameStateEnum.AcceptInput && Manager.GameState != GameStateEnum.Run) return;
             ZoomCamera();
             PanCamera();
         }
