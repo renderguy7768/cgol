@@ -126,21 +126,21 @@ namespace Assets.Scripts
                             : _cells[d, h, w].CalculateCellSum(_cells);
                         if (_is3D)
                         {
-                            switch (sum)
+                            if (sum >= 8 && sum <= 12)
                             {
-                                case 12:
-                                    _cells[d, h, w].NextCellState = _cells[d, h, w].IsAlive
-                                        ? NextCellStateEnum.NoChange
-                                        : NextCellStateEnum.MakeAlive;
-                                    break;
-                                case 16:
-                                    _cells[d, h, w].NextCellState = NextCellStateEnum.NoChange;
-                                    break;
-                                default:
-                                    _cells[d, h, w].NextCellState = _cells[d, h, w].IsAlive
-                                        ? NextCellStateEnum.MakeDead
-                                        : NextCellStateEnum.NoChange;
-                                    break;
+                                _cells[d, h, w].NextCellState = _cells[d, h, w].IsAlive
+                                    ? NextCellStateEnum.NoChange
+                                    : NextCellStateEnum.MakeAlive;
+                            }
+                            else if (sum < 8 || sum > 14)
+                            {
+                                _cells[d, h, w].NextCellState = _cells[d, h, w].IsAlive
+                                    ? NextCellStateEnum.MakeDead
+                                    : NextCellStateEnum.NoChange;
+                            }
+                            else
+                            {
+                                _cells[d, h, w].NextCellState = NextCellStateEnum.NoChange;
                             }
                         }
                         else
