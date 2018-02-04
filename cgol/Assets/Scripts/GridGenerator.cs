@@ -1,4 +1,3 @@
-using System;
 using System.Collections;
 using System.Linq;
 using UnityEngine;
@@ -26,6 +25,8 @@ namespace Assets.Scripts
         private int _xOffset;
         private int _yOffset;
 
+        private Coroutine _runCoroutine;
+
         private void Awake()
         {
             Assert.IsTrue(Width > 2, "Width should be greater than 2 for proper simulation to occur");
@@ -40,7 +41,6 @@ namespace Assets.Scripts
 
             if (Manager.Initialize())
             {
-                _cells = new Cell[Height, Width];
                 Manager.GameState = GameStateEnum.Wait;
             }
         }
@@ -50,6 +50,7 @@ namespace Assets.Scripts
             // Calculate cell offsets
             if (Manager.GameState == GameStateEnum.Wait)
             {
+                _cells = new Cell[Height, Width];
                 _xOffset = Width - Mathf.FloorToInt(0.5f * (Width - 1) + 1.0f);
                 _yOffset = Height - Mathf.FloorToInt(0.5f * (Height - 1) + 1.0f);
                 PopulateGrid();
@@ -133,11 +134,21 @@ namespace Assets.Scripts
 
         private void Update()
         {
-
-            if (Manager.GameState == GameStateEnum.AcceptInput && Input.GetKeyDown(KeyCode.Return))
+            if (Input.GetKeyDown(KeyCode.Return) || Input.GetKeyDown(KeyCode.Space) || Input.GetKeyDown(KeyCode.KeypadEnter))
             {
-                Manager.GameState = GameStateEnum.Run;
-                StartCoroutine(Run());
+                if (Manager.GameState == GameStateEnum.AcceptInput)
+                {
+                    Manager.GameState = GameStateEnum.Run;
+                    _runCoroutine = StartCoroutine(Run());
+                }
+                else if (Manager.GameState == GameStateEnum.Run)
+                {
+                    Manager.GameState = GameStateEnum.AcceptInput;
+                    if (_runCoroutine != null)
+                    {
+                        StopCoroutine(_runCoroutine);
+                    }
+                }
             }
         }
         private IEnumerator Run()

@@ -13,8 +13,8 @@ namespace Assets.Scripts
     {
         public int CellState { get; private set; }
         private Renderer _renderer;
-        private Index _me;
-        public Index[] MyNeighbors { get; private set; }
+        //private Index _me;
+        internal Index[] MyNeighbors { get; private set; }
         public NextCellStateEnum NextCellState { get; set; }
         private bool _isAlive;
         public bool IsAlive
@@ -41,8 +41,8 @@ namespace Assets.Scripts
             _renderer = GetComponent<Renderer>();
             IsAlive = Random.Range(0, int.MaxValue) % 2 == 0;
             NextCellState = NextCellStateEnum.NoChange;
-            _me.R = row;
-            _me.C = column;
+            //_me.R = row;
+            //_me.C = column;
             MyNeighbors = new Index[8];
 
             MyNeighbors[0].R = row;
@@ -79,10 +79,10 @@ namespace Assets.Scripts
             }
         }
     }
-    public struct Index
+    internal struct Index
     {
-        public int R;
-        public int C;
+        internal int R;
+        internal int C;
     }
 
 }
