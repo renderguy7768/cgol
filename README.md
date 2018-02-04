@@ -2,12 +2,12 @@
 Conway's Game of Life In Unity 
 
 # Rules #
-## 2D ##
+### 2D ###
 1. Any live cell with fewer than two live neighbors dies, as if caused by underpopulation.
 2. Any live cell with two or three live neighbors lives on to the next generation.
 3. Any live cell with more than three live neighbors dies, as if by overpopulation.
 4. Any dead cell with exactly three live neighbors becomes a live cell, as if by reproduction.
-## 3D ##
+### 3D ###
 1. Any live cell with fewer than seven live neighbors dies, as if caused by underpopulation.
 2. Any live cell with twelve or thirteen live neighbors lives on to the next generation.
 3. Any live cell with more than thirteen live neighbors dies, as if by overpopulation.
@@ -19,10 +19,10 @@ Conway's Game of Life In Unity
 * Enter/Spacebar to start/pause simulation
 * R to reset Camera back to original position
 * Escape to exit in standalone build
-## Only in 2D ##
+### Only in 2D ###
 * LMB hold and drag to pan
 * Scroll to zoom in/out
-## Only in 3D ##
+### Only in 3D ###
 * WASD to move camera 
 * LMB hold and move mouse to rotate camera
 
