@@ -197,6 +197,7 @@ namespace Assets.Scripts
                 if (Manager.GameState == GameStateEnum.AcceptInput && _hasRunCoroutineFinished)
                 {
                     Manager.GameState = GameStateEnum.Run;
+                    _hasRunCoroutineFinished = false;
                     StartCoroutine(Run());           
                 }
                 else if (Manager.GameState == GameStateEnum.Run)
@@ -207,7 +208,6 @@ namespace Assets.Scripts
         }
         private IEnumerator Run()
         {
-            _hasRunCoroutineFinished = false;
             while (Manager.GameState == GameStateEnum.Run)
             {
                 UpdateCells();
