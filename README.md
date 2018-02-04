@@ -18,4 +18,4 @@ Conway's Game of Life In Unity
 
 # Highlights
 The camera controller of orthographic camera is highly optimized and provides a good interface.
- 
+The other branch has only 2d with a basic start scene, I have decided to remove it from the master.

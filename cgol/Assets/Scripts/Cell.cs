@@ -1,19 +1,12 @@
-using System;
 using UnityEngine;
-using Random = UnityEngine.Random;
-
-/**
- * Make index internal and remove serialization
- */
 
 namespace Assets.Scripts
 {
     public enum NextCellStateEnum { NoChange, MakeDead, MakeAlive }
     public class Cell : MonoBehaviour
     {
-        public int CellState { get; private set; }
         private Renderer _renderer;
-        //private Index _me;
+        public int CellState { get; private set; }   
         internal Index[] MyNeighbors { get; private set; }
         public NextCellStateEnum NextCellState { get; set; }
         private bool _isAlive;
@@ -39,10 +32,8 @@ namespace Assets.Scripts
             var columnMinusOne = column - 1;
 
             _renderer = GetComponent<Renderer>();
-            IsAlive = Random.Range(0, int.MaxValue) % 2 == 0;
+            IsAlive = (Random.Range(0, int.MaxValue) & 0x1) == 0;
             NextCellState = NextCellStateEnum.NoChange;
-            //_me.R = row;
-            //_me.C = column;
             MyNeighbors = new Index[8];
 
             MyNeighbors[0].R = row;
