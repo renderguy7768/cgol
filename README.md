@@ -8,13 +8,13 @@ Conway's Game of Life In Unity
 4. Any dead cell with exactly three live neighbours becomes a live cell, as if by reproduction.
 
 # Controls
-LMB on the cube to make it alive/dead only when simulation not started/paused
-Enter/Spacebar to start/pause simulation
-R to reset Camera back to original position
-LMB hold and drag to pan
-Scroll to zoom in/out
-Esc to exit in standalone build
-Press Go to go to simulation scene if on start scene
+* LMB on the cube to make it alive/dead only when simulation not started/paused
+* Enter/Spacebar to start/pause simulation
+* R to reset Camera back to original position
+* LMB hold and drag to pan
+* Scroll to zoom in/out
+* Esc to exit in standalone build
+* Press Go to go to simulation scene if on start scene
 
 # Highlights
 The camera controller of orthographic camera is highly optimized and provides a good interface.
