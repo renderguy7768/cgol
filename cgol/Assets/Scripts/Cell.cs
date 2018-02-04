@@ -19,9 +19,9 @@ namespace Assets.Scripts
         //////////////////////////////////////////////////
 
         public Index[] MyNeighbors; //{ get; private set; } // Make private
-        public Index Me;
-        public Index FrontOfMe;
-        public Index BackOfMe;
+        public Index Me;// delete
+        public Index FrontOfMe;// Make private
+        public Index BackOfMe;// Make private
 
         public bool IsSumSet; //{ get; set; }
 
@@ -145,9 +145,26 @@ namespace Assets.Scripts
 
         }
 
-        public void CalculateCellSum(Cell[,,] cells)
+        public int CalculateCellSum(Cell[,,] cells)
         {
-            Sum = CellState + MyNeighbors.Sum(neighbor => cells[neighbor.D, neighbor.H, neighbor.W].CellState);
+            if (!IsSumSet)
+            {
+                Sum = CellState + MyNeighbors.Sum(neighbor => cells[neighbor.D, neighbor.H, neighbor.W].CellState);
+            }
+            return Sum;
+        }
+
+        public int CalculateCellSum3D(Cell[,,] cells)
+        {
+            var result = CalculateCellSum(cells);
+
+            var backCell = cells[BackOfMe.D, BackOfMe.H, BackOfMe.W];
+            result += backCell.IsSumSet ? backCell.Sum : backCell.CalculateCellSum(cells);
+
+            var frontCell = cells[FrontOfMe.D, FrontOfMe.H, FrontOfMe.W];
+            result += frontCell.IsSumSet ? frontCell.Sum : frontCell.CalculateCellSum(cells);
+
+            return result;
         }
 
         private void OnMouseDown()

@@ -35,7 +35,7 @@ namespace Assets.Scripts
         private int _width, _height, _depth;
         private bool _is3D;
         private int _distanceMultiplier;
-        private Coroutine _runCoroutine;
+        private bool _hasRunCoroutineFinished;
 
         private void Awake()
         {
@@ -44,6 +44,7 @@ namespace Assets.Scripts
             _depth = Depth;
             _is3D = Is3D;
             _distanceMultiplier = DistanceMultiplier;
+            _hasRunCoroutineFinished = true;
 
             Assert.IsTrue(_width > 2, "Width should be greater than 2 for proper simulation to occur");
             Assert.IsTrue(_height > 2, "Height should be greater than 2 for proper simulation to occur");
@@ -120,14 +121,31 @@ namespace Assets.Scripts
                 {
                     for (var w = 0; w < _width; w++)
                     {
-                        _cells[d, h, w].CalculateCellSum(_cells);
+                        var sum = _is3D
+                            ? _cells[d, h, w].CalculateCellSum3D(_cells)
+                            : _cells[d, h, w].CalculateCellSum(_cells);
                         if (_is3D)
                         {
-                            
+                            switch (sum)
+                            {
+                                case 12:
+                                    _cells[d, h, w].NextCellState = _cells[d, h, w].IsAlive
+                                        ? NextCellStateEnum.NoChange
+                                        : NextCellStateEnum.MakeAlive;
+                                    break;
+                                case 16:
+                                    _cells[d, h, w].NextCellState = NextCellStateEnum.NoChange;
+                                    break;
+                                default:
+                                    _cells[d, h, w].NextCellState = _cells[d, h, w].IsAlive
+                                        ? NextCellStateEnum.MakeDead
+                                        : NextCellStateEnum.NoChange;
+                                    break;
+                            }
                         }
                         else
                         {
-                            switch (_cells[d, h, w].Sum)
+                            switch (sum)
                             {
                                 case 3:
                                     _cells[d, h, w].NextCellState = _cells[d, h, w].IsAlive
@@ -176,29 +194,27 @@ namespace Assets.Scripts
         {
             if (Input.GetKeyDown(KeyCode.Return) || Input.GetKeyDown(KeyCode.Space) || Input.GetKeyDown(KeyCode.KeypadEnter))
             {
-                if (Manager.GameState == GameStateEnum.AcceptInput)
+                if (Manager.GameState == GameStateEnum.AcceptInput && _hasRunCoroutineFinished)
                 {
                     Manager.GameState = GameStateEnum.Run;
-                    _runCoroutine = StartCoroutine(Run());
+                    StartCoroutine(Run());           
                 }
                 else if (Manager.GameState == GameStateEnum.Run)
                 {
                     Manager.GameState = GameStateEnum.AcceptInput;
-                    if (_runCoroutine != null)
-                    {
-                        StopCoroutine(_runCoroutine);
-                    }
                 }
             }
         }
         private IEnumerator Run()
         {
+            _hasRunCoroutineFinished = false;
             while (Manager.GameState == GameStateEnum.Run)
             {
                 UpdateCells();
                 ApplyCellUpdates();
                 yield return new WaitForSeconds(GenerationGap);
             }
+            _hasRunCoroutineFinished = true;
         }
     }
 }
