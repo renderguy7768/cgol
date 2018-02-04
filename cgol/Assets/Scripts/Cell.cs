@@ -7,6 +7,7 @@ namespace Assets.Scripts
     {
         private Renderer _renderer;
         public int CellState { get; private set; }   
+        [SerializeField]
         internal Index[] MyNeighbors { get; private set; }
         public NextCellStateEnum NextCellState { get; set; }
         private bool _isAlive;
@@ -36,29 +37,29 @@ namespace Assets.Scripts
             NextCellState = NextCellStateEnum.NoChange;
             MyNeighbors = new Index[8];
 
-            MyNeighbors[0].R = row;
-            MyNeighbors[0].C = columnMinusOne < 0 ? gridWidthMinusOne : columnMinusOne;
+            MyNeighbors[0].H = row;
+            MyNeighbors[0].W = columnMinusOne < 0 ? gridWidthMinusOne : columnMinusOne;
 
-            MyNeighbors[1].R = rowPlusOne > gridHeightMinusOne ? 0 : rowPlusOne;
-            MyNeighbors[1].C = columnMinusOne < 0 ? gridWidthMinusOne : columnMinusOne;
+            MyNeighbors[1].H = rowPlusOne > gridHeightMinusOne ? 0 : rowPlusOne;
+            MyNeighbors[1].W = columnMinusOne < 0 ? gridWidthMinusOne : columnMinusOne;
 
-            MyNeighbors[2].R = rowPlusOne > gridHeightMinusOne ? 0 : rowPlusOne;
-            MyNeighbors[2].C = column;
+            MyNeighbors[2].H = rowPlusOne > gridHeightMinusOne ? 0 : rowPlusOne;
+            MyNeighbors[2].W = column;
 
-            MyNeighbors[3].R = rowPlusOne > gridHeightMinusOne ? 0 : rowPlusOne;
-            MyNeighbors[3].C = columnPlusOne > gridWidthMinusOne ? 0 : columnPlusOne;
+            MyNeighbors[3].H = rowPlusOne > gridHeightMinusOne ? 0 : rowPlusOne;
+            MyNeighbors[3].W = columnPlusOne > gridWidthMinusOne ? 0 : columnPlusOne;
 
-            MyNeighbors[4].R = row;
-            MyNeighbors[4].C = columnPlusOne > gridWidthMinusOne ? 0 : columnPlusOne;
+            MyNeighbors[4].H = row;
+            MyNeighbors[4].W = columnPlusOne > gridWidthMinusOne ? 0 : columnPlusOne;
 
-            MyNeighbors[5].R = rowMinusOne < 0 ? gridHeightMinusOne : rowMinusOne;
-            MyNeighbors[5].C = columnPlusOne > gridWidthMinusOne ? 0 : columnPlusOne;
+            MyNeighbors[5].H = rowMinusOne < 0 ? gridHeightMinusOne : rowMinusOne;
+            MyNeighbors[5].W = columnPlusOne > gridWidthMinusOne ? 0 : columnPlusOne;
 
-            MyNeighbors[6].R = rowMinusOne < 0 ? gridHeightMinusOne : rowMinusOne;
-            MyNeighbors[6].C = column;
+            MyNeighbors[6].H = rowMinusOne < 0 ? gridHeightMinusOne : rowMinusOne;
+            MyNeighbors[6].W = column;
 
-            MyNeighbors[7].R = rowMinusOne < 0 ? gridHeightMinusOne : rowMinusOne;
-            MyNeighbors[7].C = columnMinusOne < 0 ? gridWidthMinusOne : columnMinusOne;
+            MyNeighbors[7].H = rowMinusOne < 0 ? gridHeightMinusOne : rowMinusOne;
+            MyNeighbors[7].W = columnMinusOne < 0 ? gridWidthMinusOne : columnMinusOne;
         }
 
 
@@ -70,10 +71,13 @@ namespace Assets.Scripts
             }
         }
     }
+
+    [System.Serializable]
     internal struct Index
     {
-        internal int R;
-        internal int C;
+        internal int W;
+        internal int H;
+        internal int D;
     }
 
 }

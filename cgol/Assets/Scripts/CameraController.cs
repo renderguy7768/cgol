@@ -7,7 +7,9 @@ namespace Assets.Scripts
     [RequireComponent(typeof(Camera))]
     public class CameraController : MonoBehaviour
     {
-        public class SetupCameraEvent : UnityEvent<int, int> { }
+        public class SetupCameraEvent : UnityEvent<int, int, int, float>
+        {
+        }
 
         public static SetupCameraEvent SetupCamera;
         private Coroutine _resetCameraCoroutine;
@@ -18,11 +20,14 @@ namespace Assets.Scripts
         private MinMax<float> _resetCameraSpeed;
         private Bounds _bounds;
         private Vector3 _initialMousePosition;
+        private Vector3 _targetRotation;
 
+        private const float RotationSpeed = 50.0f;
+        private const float MoveSpeed = 50.0f;
         private const float PanSpeed = 2.5f;
         private const float ZoomSpeed =
 #if UNITY_EDITOR || UNITY_STANDALONE
-        100.0f;
+            100.0f;
 #elif UNITY_ANDROID || UNITY_IOS
         1.0f;
 #endif
@@ -39,28 +44,43 @@ namespace Assets.Scripts
             _resetCameraSpeed.Min = 0.01f;
             _resetCameraSpeed.Max = 5.0f;
         }
+
         private void OnEnable()
         {
             SetupCamera.AddListener(Setup);
         }
+
         private void OnDisable()
         {
             SetupCamera.RemoveListener(Setup);
         }
 
-        private void Setup(int gridWidth, int gridHeight)
+        private void Setup(int gridWidth, int gridHeight, int gridDepth, float distanceMultiplierFor3D)
         {
             var isWidthEven = (gridWidth & 0x1) == 0;
             var isHeightEven = (gridHeight & 0x1) == 0;
+            if (gridDepth == 1)
+            {
+                _camera.orthographic = true;
 
-            _originalPostion = transform.position =
-                new Vector3(isWidthEven ? -0.5f : 0.0f, isHeightEven ? -0.5f : 0.0f, -10.0f);
+                _originalPostion = transform.position =
+                    new Vector3(isWidthEven ? -0.5f : 0.0f, isHeightEven ? -0.5f : 0.0f, -10.0f);
 
-            var aspectRatioMultiplier = _camera.aspect >= 1.0f ? 1.0f : 1.0f / _camera.aspect;
-            _orthographicSize.Max = _camera.orthographicSize = aspectRatioMultiplier * 0.5f * Mathf.Max(gridWidth, gridHeight);
-            _orthographicSize.Min = aspectRatioMultiplier - 0.5f;
-            _bounds = new Bounds(_camera, _orthographicSize.Max);
-            _bounds.Update(_camera);
+                var aspectRatioMultiplier = _camera.aspect >= 1.0f ? 1.0f : 1.0f / _camera.aspect;
+                _orthographicSize.Max = _camera.orthographicSize =
+                    aspectRatioMultiplier * 0.5f * Mathf.Max(gridWidth, gridHeight);
+                _orthographicSize.Min = aspectRatioMultiplier - 0.5f;
+                _bounds = new Bounds(_camera, _orthographicSize.Max);
+                _bounds.Update(_camera);
+            }
+            else
+            {
+                _camera.orthographic = false;
+
+                _originalPostion = transform.position =
+                    new Vector3(isWidthEven ? -0.5f : 0.0f, isHeightEven ? -0.5f : 0.0f,
+                        -distanceMultiplierFor3D * Mathf.Max(gridWidth, gridHeight));
+            }
         }
 
         private void Update()
@@ -71,14 +91,79 @@ namespace Assets.Scripts
                 _isCameraResetting = true;
                 _resetCameraCoroutine = StartCoroutine(ResetCamera());
             }
-            DetermineZoomDelta();
+
+            if (_camera.orthographic)
+            {
+                DetermineZoomDelta();
+            }
+            else
+            {
+                if (Input.GetMouseButton(0))
+                {
+                    if (_isCameraResetting && _resetCameraCoroutine != null)
+                    {
+                        StopCoroutine(_resetCameraCoroutine);
+                        _isCameraResetting = false;
+                    }
+                    CalculateNewRotaion();
+                }
+            }
         }
 
         private void LateUpdate()
         {
             if (Manager.GameState != GameStateEnum.AcceptInput && Manager.GameState != GameStateEnum.Run) return;
-            ZoomCamera();
-            PanCamera();
+            if (_camera.orthographic)
+            {
+                ZoomCamera();
+                PanCamera();
+            }
+            else
+            {
+                if (Input.GetMouseButton(0))
+                {
+                    transform.eulerAngles =
+                        Vector3.Lerp(transform.eulerAngles, _targetRotation, RotationSpeed * Time.smoothDeltaTime);
+                }
+
+                MoveCamera();
+            }
+        }
+
+        private void CalculateNewRotaion()
+        {
+            _targetRotation = new Vector3(-Input.GetAxis("Mouse Y"), Input.GetAxis("Mouse X"), 0.0f);
+
+            _targetRotation += transform.eulerAngles;
+        }
+
+        private void MoveCamera()
+        {
+            if (Input.GetKeyDown(KeyCode.W) || Input.GetKeyDown(KeyCode.S) || Input.GetKeyDown(KeyCode.A) || Input.GetKeyDown(KeyCode.D))
+            {
+                if (_isCameraResetting && _resetCameraCoroutine != null)
+                {
+                    StopCoroutine(_resetCameraCoroutine);
+                    _isCameraResetting = false;
+                }
+            }
+            var time = Time.smoothDeltaTime * MoveSpeed;
+            if (Input.GetKey(KeyCode.W))
+            {
+                transform.position += transform.forward * time;
+            }
+            if (Input.GetKey(KeyCode.S))
+            {
+                transform.position -= transform.forward * time;
+            }
+            if (Input.GetKey(KeyCode.A))
+            {
+                transform.position -= transform.right * time;
+            }
+            if (Input.GetKey(KeyCode.D))
+            {
+                transform.position += transform.right * time;
+            }
         }
 
         private IEnumerator ResetCamera()
@@ -89,10 +174,17 @@ namespace Assets.Scripts
                 time += Time.smoothDeltaTime * Mathf.Lerp(_resetCameraSpeed.Min, _resetCameraSpeed.Max, Time.smoothDeltaTime);
                 transform.position = Vector3.Lerp(transform.position, _originalPostion, time);
                 transform.rotation = Quaternion.Lerp(transform.rotation, Quaternion.identity, time);
-                _camera.orthographicSize = Mathf.Lerp(_camera.orthographicSize, _orthographicSize.Max, time);
+
+                if (_camera.orthographic)
+                {
+                    _camera.orthographicSize = Mathf.Lerp(_camera.orthographicSize, _orthographicSize.Max, time);
+                }
                 return time > 1.0f;
             });
-            UpdateBoundsAfterReset();
+            if (_camera.orthographic)
+            {
+                UpdateBoundsAfterReset();
+            }
         }
 
         private void UpdateBoundsAfterReset()

@@ -15,15 +15,25 @@ namespace Assets.Scripts
         [Tooltip("Grid Height (Number of Rows)")]
         public int Height;
 
+        [Range(3, 150)]
+        [Tooltip("Grid Depth")]
+        public int Depth;
+
         [Range(0.1f, 1.0f)]
         [Tooltip("Delay in seconds between display of two generations")]
         public float GenerationGap;
 
+        [Tooltip("Toggle to set 3d on and off. If off depth will be one even if it shows 3")]
+        public bool Is3D;
+
+        [Range(1, 10)]
+        [Tooltip("Multiplier for distance between all cells in 3D mode")]
+        public int DistanceMultiplier;
+
         private static readonly Vector3 CellScale = Vector3.one * 0.8f;
 
-        private Cell[,] _cells;
-        private int _xOffset;
-        private int _yOffset;
+        private Cell[,,] _cells;
+        private Vector3Int _offset;
 
         private Coroutine _runCoroutine;
 
@@ -31,12 +41,18 @@ namespace Assets.Scripts
         {
             Assert.IsTrue(Width > 2, "Width should be greater than 2 for proper simulation to occur");
             Assert.IsTrue(Height > 2, "Height should be greater than 2 for proper simulation to occur");
+            Assert.IsTrue(Depth > 2, "Depth should be greater than 2 for proper simulation to occur");
 
-            if (Width < 3 || Height < 3)
+            if (Width < 3 || Height < 3 || Depth < 3)
             {
                 Manager.GameState = GameStateEnum.Invalid;
-                Debug.LogError("Invalid width or height");
+                Debug.LogError("Invalid width or height or depth");
                 return;
+            }
+
+            if (!Is3D)
+            {
+                Depth = 1;
             }
 
             if (Manager.Initialize())
@@ -50,32 +66,39 @@ namespace Assets.Scripts
             // Calculate cell offsets
             if (Manager.GameState == GameStateEnum.Wait)
             {
-                _cells = new Cell[Height, Width];
-                _xOffset = Width - Mathf.FloorToInt(0.5f * (Width - 1) + 1.0f);
-                _yOffset = Height - Mathf.FloorToInt(0.5f * (Height - 1) + 1.0f);
+                _cells = new Cell[Depth, Height, Width];
+                _offset.x = Width - Mathf.FloorToInt(0.5f * (Width - 1) + 1.0f);
+                _offset.y = Height - Mathf.FloorToInt(0.5f * (Height - 1) + 1.0f);
+                _offset.z = Depth - Mathf.FloorToInt(0.5f * (Depth - 1) + 1.0f);
                 PopulateGrid();
-                CameraController.SetupCamera.Invoke(Width, Height);
+                CameraController.SetupCamera.Invoke(Width, Height, Depth, DistanceMultiplier);
             }
         }
 
         private void PopulateGrid()
         {
-            for (var row = 0; row < Height; row++)
+            for (var d = 0; d < Depth; d++)
             {
-                for (var column = 0; column < Width; column++)
+                for (var h = 0; h < Height; h++)
                 {
-                    _cells[row, column] = Instantiate(Manager.CellPrefab, transform).GetComponent<Cell>();
+                    for (var w = 0; w < Width; w++)
+                    {
+
+                        _cells[d, h, w] = Instantiate(Manager.CellPrefab, transform).GetComponent<Cell>();
 
 #if UNITY_EDITOR
-                    _cells[row, column].gameObject.name = "Cell (" + row + "," + column + ")";
+                        _cells[d, h, w].gameObject.name = "Cell (" + h + "," + w + "," + d + ")";
 #endif
 
-                    var cellTransform = _cells[row, column].transform;
-                    cellTransform.position = new Vector3(column - _xOffset, row - _yOffset, 0.0f);
-                    cellTransform.rotation = Quaternion.identity;
-                    cellTransform.localScale = CellScale;
+                        var cellTransform = _cells[d, h, w].transform;
+                        cellTransform.position = new Vector3(w - _offset.x, h - _offset.y, d - _offset.z) * (Is3D
+                            ? DistanceMultiplier
+                            : 1.0f);
+                        cellTransform.rotation = Quaternion.identity;
+                        cellTransform.localScale = CellScale;
 
-                    _cells[row, column].Initialize(row, column, Width, Height);
+                        _cells[d, h, w].Initialize(h, w, Width, Height);
+                    }
                 }
             }
 
@@ -84,26 +107,29 @@ namespace Assets.Scripts
 
         private void UpdateCells()
         {
-            for (var row = 0; row < Height; row++)
+            for (var d = 0; d < Depth; d++)
             {
-                for (var column = 0; column < Width; column++)
+                for (var h = 0; h < Height; h++)
                 {
-                    var sum = CalculateCellSum(_cells[row, column]);
-                    switch (sum)
+                    for (var w = 0; w < Width; w++)
                     {
-                        case 3:
-                            _cells[row, column].NextCellState = _cells[row, column].IsAlive
-                                ? NextCellStateEnum.NoChange
-                                : NextCellStateEnum.MakeAlive;
-                            break;
-                        case 4:
-                            _cells[row, column].NextCellState = NextCellStateEnum.NoChange;
-                            break;
-                        default:
-                            _cells[row, column].NextCellState = _cells[row, column].IsAlive
-                                ? NextCellStateEnum.MakeDead
-                                : NextCellStateEnum.NoChange;
-                            break;
+                        var sum = CalculateCellSum(_cells[d, h, w]);
+                        switch (sum)
+                        {
+                            case 3:
+                                _cells[d, h, w].NextCellState = _cells[d, h, w].IsAlive
+                                    ? NextCellStateEnum.NoChange
+                                    : NextCellStateEnum.MakeAlive;
+                                break;
+                            case 4:
+                                _cells[d, h, w].NextCellState = NextCellStateEnum.NoChange;
+                                break;
+                            default:
+                                _cells[d, h, w].NextCellState = _cells[d, h, w].IsAlive
+                                    ? NextCellStateEnum.MakeDead
+                                    : NextCellStateEnum.NoChange;
+                                break;
+                        }
                     }
                 }
             }
@@ -111,17 +137,20 @@ namespace Assets.Scripts
 
         private void ApplyCellUpdates()
         {
-            for (var row = 0; row < Height; row++)
+            for (var d = 0; d < Depth; d++)
             {
-                for (var column = 0; column < Width; column++)
+                for (var h = 0; h < Height; h++)
                 {
-                    if (_cells[row, column].NextCellState == NextCellStateEnum.MakeDead)
+                    for (var w = 0; w < Width; w++)
                     {
-                        _cells[row, column].IsAlive = false;
-                    }
-                    else if (_cells[row, column].NextCellState == NextCellStateEnum.MakeAlive)
-                    {
-                        _cells[row, column].IsAlive = true;
+                        if (_cells[d, h, w].NextCellState == NextCellStateEnum.MakeDead)
+                        {
+                            _cells[d, h, w].IsAlive = false;
+                        }
+                        else if (_cells[d, h, w].NextCellState == NextCellStateEnum.MakeAlive)
+                        {
+                            _cells[d, h, w].IsAlive = true;
+                        }
                     }
                 }
             }
@@ -129,7 +158,7 @@ namespace Assets.Scripts
 
         private int CalculateCellSum(Cell cell)
         {
-            return cell.CellState + cell.MyNeighbors.Sum(neighbor => _cells[neighbor.R, neighbor.C].CellState);
+            return cell.CellState + cell.MyNeighbors.Sum(neighbor => _cells[neighbor.D, neighbor.H, neighbor.W].CellState);
         }
 
         private void Update()
