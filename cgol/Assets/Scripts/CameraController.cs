@@ -98,15 +98,13 @@ namespace Assets.Scripts
             }
             else
             {
-                if (Input.GetMouseButton(0))
+                if (!Input.GetMouseButton(0)) return;
+                if (_isCameraResetting && _resetCameraCoroutine != null)
                 {
-                    if (_isCameraResetting && _resetCameraCoroutine != null)
-                    {
-                        StopCoroutine(_resetCameraCoroutine);
-                        _isCameraResetting = false;
-                    }
-                    CalculateNewRotaion();
+                    StopCoroutine(_resetCameraCoroutine);
+                    _isCameraResetting = false;
                 }
+                CalculateNewRotaion();
             }
         }
 

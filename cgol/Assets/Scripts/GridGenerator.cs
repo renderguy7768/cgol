@@ -33,7 +33,6 @@ namespace Assets.Scripts
         private static readonly Vector3 CellScale = Vector3.one * 0.8f;
 
         private Cell[,,] _cells;
-        //private Vector3Int _offset;
 
         private Coroutine _runCoroutine;
 
@@ -63,13 +62,10 @@ namespace Assets.Scripts
 
         private void Start()
         {
-            // Calculate cell offsets
-            if (Manager.GameState == GameStateEnum.Wait)
-            {
-                _cells = new Cell[Depth, Height, Width];
-                PopulateGrid();
-                CameraController.SetupCamera.Invoke(Width, Height, Depth, DistanceMultiplier);
-            }
+            if (Manager.GameState == GameStateEnum.Invalid) return;
+            _cells = new Cell[Depth, Height, Width];
+            PopulateGrid();
+            CameraController.SetupCamera.Invoke(Width, Height, Depth, DistanceMultiplier);
         }
 
         private void PopulateGrid()
