@@ -1,6 +1,10 @@
 using UnityEngine;
 using UnityEngine.Assertions;
 
+/**
+ * Maybe make it static if possible
+ */
+
 namespace Assets.Scripts
 {
     public enum GameStateEnum : byte { Invalid, Wait, AcceptInput, Run }

@@ -1,4 +1,6 @@
+using System;
 using System.Collections;
+using System.Linq;
 using UnityEngine;
 using UnityEngine.Assertions;
 
@@ -6,11 +8,17 @@ namespace Assets.Scripts
 {
     public class GridGenerator : MonoBehaviour
     {
+        [Range(3, 150)]
         [Tooltip("Grid Width (Number of Columns)")]
         public int Width;
 
+        [Range(3, 150)]
         [Tooltip("Grid Height (Number of Rows)")]
         public int Height;
+
+        [Range(0.1f, 1.0f)]
+        [Tooltip("Delay in seconds between display of two generations")]
+        public float GenerationGap;
 
         private static readonly Vector3 CellScale = Vector3.one * 0.8f;
 
@@ -44,19 +52,22 @@ namespace Assets.Scripts
             {
                 _xOffset = Width - Mathf.FloorToInt(0.5f * (Width - 1) + 1.0f);
                 _yOffset = Height - Mathf.FloorToInt(0.5f * (Height - 1) + 1.0f);
-                StartCoroutine(PopulateGrid());
+                PopulateGrid();
                 CameraController.SetupCamera.Invoke(Width, Height);
             }
         }
 
-        private IEnumerator PopulateGrid()
+        private void PopulateGrid()
         {
             for (var row = 0; row < Height; row++)
             {
                 for (var column = 0; column < Width; column++)
                 {
                     _cells[row, column] = Instantiate(Manager.CellPrefab, transform).GetComponent<Cell>();
+
+#if UNITY_EDITOR
                     _cells[row, column].gameObject.name = "Cell (" + row + "," + column + ")";
+#endif
 
                     var cellTransform = _cells[row, column].transform;
                     cellTransform.position = new Vector3(column - _xOffset, row - _yOffset, 0.0f);
@@ -64,12 +75,60 @@ namespace Assets.Scripts
                     cellTransform.localScale = CellScale;
 
                     _cells[row, column].Initialize(row, column, Width, Height);
-
-                    yield return null;
                 }
             }
 
             Manager.GameState = GameStateEnum.AcceptInput;
+        }
+
+        private void UpdateCells()
+        {
+            for (var row = 0; row < Height; row++)
+            {
+                for (var column = 0; column < Width; column++)
+                {
+                    var sum = CalculateCellSum(_cells[row, column]);
+                    switch (sum)
+                    {
+                        case 3:
+                            _cells[row, column].NextCellState = _cells[row, column].IsAlive
+                                ? NextCellStateEnum.NoChange
+                                : NextCellStateEnum.MakeAlive;
+                            break;
+                        case 4:
+                            _cells[row, column].NextCellState = NextCellStateEnum.NoChange;
+                            break;
+                        default:
+                            _cells[row, column].NextCellState = _cells[row, column].IsAlive
+                                ? NextCellStateEnum.MakeDead
+                                : NextCellStateEnum.NoChange;
+                            break;
+                    }
+                }
+            }
+        }
+
+        private void ApplyCellUpdates()
+        {
+            for (var row = 0; row < Height; row++)
+            {
+                for (var column = 0; column < Width; column++)
+                {
+                    if (_cells[row, column].NextCellState == NextCellStateEnum.MakeDead)
+                    {
+                        _cells[row, column].IsAlive = false;
+                    }
+                    else if (_cells[row, column].NextCellState == NextCellStateEnum.MakeAlive)
+                    {
+                        _cells[row, column].IsAlive = true;
+                    }
+                }
+            }
+        }
+
+        private int CalculateCellSum(Cell cell)
+        {
+            return cell.CellState + cell.MyNeighbors.Sum(neighbor => _cells[neighbor.R, neighbor.C].CellState);
         }
 
         private void Update()
@@ -78,6 +137,16 @@ namespace Assets.Scripts
             if (Manager.GameState == GameStateEnum.AcceptInput && Input.GetKeyDown(KeyCode.Return))
             {
                 Manager.GameState = GameStateEnum.Run;
+                StartCoroutine(Run());
+            }
+        }
+        private IEnumerator Run()
+        {
+            while (Manager.GameState == GameStateEnum.Run)
+            {
+                UpdateCells();
+                ApplyCellUpdates();
+                yield return new WaitForSeconds(GenerationGap);
             }
         }
     }

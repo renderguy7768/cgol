@@ -1,5 +1,6 @@
 using System;
 using UnityEngine;
+using Random = UnityEngine.Random;
 
 /**
  * Make index internal and remove serialization
@@ -7,24 +8,23 @@ using UnityEngine;
 
 namespace Assets.Scripts
 {
+    public enum NextCellStateEnum { NoChange, MakeDead, MakeAlive }
     public class Cell : MonoBehaviour
     {
-        private int _cellState;
+        public int CellState { get; private set; }
         private Renderer _renderer;
-        private bool _isAlive;
-        [SerializeField]
         private Index _me;
-        [SerializeField]
-        private Index[] _myNeighbors;
-
+        public Index[] MyNeighbors { get; private set; }
+        public NextCellStateEnum NextCellState { get; set; }
+        private bool _isAlive;
         public bool IsAlive
         {
             get { return _isAlive; }
-            private set
+            set
             {
                 _isAlive = value;
-                _cellState = _isAlive ? 1 : 0;
-                _renderer.sharedMaterial = Manager.CellMaterials[_cellState];
+                CellState = _isAlive ? 1 : 0;
+                _renderer.sharedMaterial = Manager.CellMaterials[CellState];
             }
         }
 
@@ -39,34 +39,35 @@ namespace Assets.Scripts
             var columnMinusOne = column - 1;
 
             _renderer = GetComponent<Renderer>();
-            IsAlive = false;
+            IsAlive = Random.Range(0, int.MaxValue) % 2 == 0;
+            NextCellState = NextCellStateEnum.NoChange;
             _me.R = row;
             _me.C = column;
-            _myNeighbors = new Index[8];
+            MyNeighbors = new Index[8];
 
-            _myNeighbors[0].R = row;
-            _myNeighbors[0].C = columnMinusOne < 0 ? gridWidthMinusOne : columnMinusOne;
+            MyNeighbors[0].R = row;
+            MyNeighbors[0].C = columnMinusOne < 0 ? gridWidthMinusOne : columnMinusOne;
 
-            _myNeighbors[1].R = rowPlusOne > gridHeightMinusOne ? 0 : rowPlusOne;
-            _myNeighbors[1].C = columnMinusOne < 0 ? gridWidthMinusOne : columnMinusOne;
+            MyNeighbors[1].R = rowPlusOne > gridHeightMinusOne ? 0 : rowPlusOne;
+            MyNeighbors[1].C = columnMinusOne < 0 ? gridWidthMinusOne : columnMinusOne;
 
-            _myNeighbors[2].R = rowPlusOne > gridHeightMinusOne ? 0 : rowPlusOne;
-            _myNeighbors[2].C = column;
+            MyNeighbors[2].R = rowPlusOne > gridHeightMinusOne ? 0 : rowPlusOne;
+            MyNeighbors[2].C = column;
 
-            _myNeighbors[3].R = rowPlusOne > gridHeightMinusOne ? 0 : rowPlusOne;
-            _myNeighbors[3].C = columnPlusOne > gridWidthMinusOne ? 0 : columnPlusOne;
+            MyNeighbors[3].R = rowPlusOne > gridHeightMinusOne ? 0 : rowPlusOne;
+            MyNeighbors[3].C = columnPlusOne > gridWidthMinusOne ? 0 : columnPlusOne;
 
-            _myNeighbors[4].R = row;
-            _myNeighbors[4].C = columnPlusOne > gridWidthMinusOne ? 0 : columnPlusOne;
+            MyNeighbors[4].R = row;
+            MyNeighbors[4].C = columnPlusOne > gridWidthMinusOne ? 0 : columnPlusOne;
 
-            _myNeighbors[5].R = rowMinusOne < 0 ? gridHeightMinusOne : rowMinusOne;
-            _myNeighbors[5].C = columnPlusOne > gridWidthMinusOne ? 0 : columnPlusOne;
+            MyNeighbors[5].R = rowMinusOne < 0 ? gridHeightMinusOne : rowMinusOne;
+            MyNeighbors[5].C = columnPlusOne > gridWidthMinusOne ? 0 : columnPlusOne;
 
-            _myNeighbors[6].R = rowMinusOne < 0 ? gridHeightMinusOne : rowMinusOne;
-            _myNeighbors[6].C = column;
+            MyNeighbors[6].R = rowMinusOne < 0 ? gridHeightMinusOne : rowMinusOne;
+            MyNeighbors[6].C = column;
 
-            _myNeighbors[7].R = rowMinusOne < 0 ? gridHeightMinusOne : rowMinusOne;
-            _myNeighbors[7].C = columnMinusOne < 0 ? gridWidthMinusOne : columnMinusOne;
+            MyNeighbors[7].R = rowMinusOne < 0 ? gridHeightMinusOne : rowMinusOne;
+            MyNeighbors[7].C = columnMinusOne < 0 ? gridWidthMinusOne : columnMinusOne;
         }
 
 
@@ -78,7 +79,6 @@ namespace Assets.Scripts
             }
         }
     }
-    [Serializable]
     public struct Index
     {
         public int R;
