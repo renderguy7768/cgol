@@ -23,7 +23,7 @@ namespace Assets.Scripts
         [Tooltip("Delay in seconds between display of two generations")]
         public float GenerationGap;
 
-        [Tooltip("Toggle to set 3d on and off. If off depth will be one even if it shows 3")]
+        [Tooltip("Toggle to set 3d on and off. If off depth will be one always")]
         public bool Is3D;
 
         [Range(1, 10)]
@@ -87,7 +87,7 @@ namespace Assets.Scripts
                         _cells[d, h, w] = Instantiate(Manager.CellPrefab, transform).GetComponent<Cell>();
 
 #if UNITY_EDITOR
-                        _cells[d, h, w].gameObject.name = "Cell (" + h + "," + w + "," + d + ")";
+                        _cells[d, h, w].gameObject.name = "Cell (" + d + "," + h + "," + w + ")";
 #endif
 
                         var cellTransform = _cells[d, h, w].transform;
@@ -97,7 +97,7 @@ namespace Assets.Scripts
                         cellTransform.rotation = Quaternion.identity;
                         cellTransform.localScale = CellScale;
 
-                        _cells[d, h, w].Initialize(h, w, Width, Height);
+                        _cells[d, h, w].Initialize(d, h, w, Width, Height, Depth);
                     }
                 }
             }

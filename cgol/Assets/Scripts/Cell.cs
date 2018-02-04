@@ -1,13 +1,28 @@
 using UnityEngine;
 
+/**
+ * Make neighbors property
+ * Change access modifier of marked fields and maybe make them props
+ */
+
 namespace Assets.Scripts
 {
-    public enum NextCellStateEnum { NoChange, MakeDead, MakeAlive }
+    public enum NextCellStateEnum : byte { NoChange, MakeDead, MakeAlive }
     public class Cell : MonoBehaviour
     {
+        private const int NumberOfNeighbors = 8;
         private Renderer _renderer;
-        public int CellState { get; private set; }   
-        public Index[] MyNeighbors { get; private set; }
+        public int CellState { get; private set; }
+
+        //////////////////////////////////////////////////
+
+        public Index[] MyNeighbors; //{ get; private set; }
+        public Index Me;
+        public Index FrontOfMe;
+        public Index BackOfMe;
+
+        //////////////////////////////////////////////////
+
         public NextCellStateEnum NextCellState { get; set; }
         private bool _isAlive;
         public bool IsAlive
@@ -21,44 +36,89 @@ namespace Assets.Scripts
             }
         }
 
-        public void Initialize(int row, int column, int gridWidth, int gridHeight)
+        public void Initialize(int d, int h, int w, int gridWidth, int gridHeight, int gridDepth)
         {
             var gridWidthMinusOne = gridWidth - 1;
             var gridHeightMinusOne = gridHeight - 1;
+            var gridDepthMinusOne = gridDepth - 1;
 
-            var rowPlusOne = row + 1;
-            var rowMinusOne = row - 1;
-            var columnPlusOne = column + 1;
-            var columnMinusOne = column - 1;
+            var wPlusOne = w + 1;
+            var wMinusOne = w - 1;
+            var hPlusOne = h + 1;
+            var hMinusOne = h - 1;
+            var dPlusOne = d + 1;
+            var dMinusOne = d - 1;
+
+            var is3D = gridDepth != 1;
 
             _renderer = GetComponent<Renderer>();
             IsAlive = (Random.Range(0, int.MaxValue) & 0x1) == 0;
             NextCellState = NextCellStateEnum.NoChange;
-            MyNeighbors = new Index[8];
+            MyNeighbors = new Index[NumberOfNeighbors];
+            Me = new Index { W = w, H = h, D = d };
 
-            MyNeighbors[0].H = row;
-            MyNeighbors[0].W = columnMinusOne < 0 ? gridWidthMinusOne : columnMinusOne;
+            if (is3D)
+            {
+                FrontOfMe = new Index { W = w, H = h, D = dMinusOne < 0 ? gridDepthMinusOne : dMinusOne };
+                BackOfMe = new Index { W = w, H = h, D = dPlusOne > gridDepthMinusOne ? 0 : dPlusOne };
+            }
 
-            MyNeighbors[1].H = rowPlusOne > gridHeightMinusOne ? 0 : rowPlusOne;
-            MyNeighbors[1].W = columnMinusOne < 0 ? gridWidthMinusOne : columnMinusOne;
+            MyNeighbors[0] = new Index
+            {
+                H = h,
+                W = wMinusOne < 0 ? gridWidthMinusOne : wMinusOne,
+                D = is3D ? d : 0
+            };
 
-            MyNeighbors[2].H = rowPlusOne > gridHeightMinusOne ? 0 : rowPlusOne;
-            MyNeighbors[2].W = column;
+            MyNeighbors[1] = new Index
+            {
+                H = hPlusOne > gridHeightMinusOne ? 0 : hPlusOne,
+                W = wMinusOne < 0 ? gridWidthMinusOne : wMinusOne,
+                D = is3D ? d : 0
+            };
 
-            MyNeighbors[3].H = rowPlusOne > gridHeightMinusOne ? 0 : rowPlusOne;
-            MyNeighbors[3].W = columnPlusOne > gridWidthMinusOne ? 0 : columnPlusOne;
+            MyNeighbors[2] = new Index
+            {
+                H = hPlusOne > gridHeightMinusOne ? 0 : hPlusOne,
+                W = w,
+                D = is3D ? d : 0
+            };
 
-            MyNeighbors[4].H = row;
-            MyNeighbors[4].W = columnPlusOne > gridWidthMinusOne ? 0 : columnPlusOne;
+            MyNeighbors[3] = new Index
+            {
+                H = hPlusOne > gridHeightMinusOne ? 0 : hPlusOne,
+                W = wPlusOne > gridWidthMinusOne ? 0 : wPlusOne,
+                D = is3D ? d : 0
+            };
 
-            MyNeighbors[5].H = rowMinusOne < 0 ? gridHeightMinusOne : rowMinusOne;
-            MyNeighbors[5].W = columnPlusOne > gridWidthMinusOne ? 0 : columnPlusOne;
+            MyNeighbors[4] = new Index
+            {
+                H = h,
+                W = wPlusOne > gridWidthMinusOne ? 0 : wPlusOne,
+                D = is3D ? d : 0
+            };
 
-            MyNeighbors[6].H = rowMinusOne < 0 ? gridHeightMinusOne : rowMinusOne;
-            MyNeighbors[6].W = column;
+            MyNeighbors[5] = new Index
+            {
+                H = hMinusOne < 0 ? gridHeightMinusOne : hMinusOne,
+                W = wPlusOne > gridWidthMinusOne ? 0 : wPlusOne,
+                D = is3D ? d : 0
+            };
 
-            MyNeighbors[7].H = rowMinusOne < 0 ? gridHeightMinusOne : rowMinusOne;
-            MyNeighbors[7].W = columnMinusOne < 0 ? gridWidthMinusOne : columnMinusOne;
+            MyNeighbors[6] = new Index
+            {
+                H = hMinusOne < 0 ? gridHeightMinusOne : hMinusOne,
+                W = w,
+                D = is3D ? d : 0
+            };
+
+            MyNeighbors[7] = new Index
+            {
+                H = hMinusOne < 0 ? gridHeightMinusOne : hMinusOne,
+                W = wMinusOne < 0 ? gridWidthMinusOne : wMinusOne,
+                D = is3D ? d : 0
+            };
+
         }
 
 
@@ -78,5 +138,4 @@ namespace Assets.Scripts
         public int H;
         public int D;
     }
-
 }
