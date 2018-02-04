@@ -32,13 +32,11 @@ namespace Assets.Scripts
 
             for (var i = 0; i < CellMaterials.Length; i++)
             {
-                if (CellMaterials[i] == null)
-                {
-                    GameState = GameStateEnum.Invalid;
-                    Debug.LogErrorFormat("Cell Material {0} not found", i);
-                    result = false;
-                    break;
-                }
+                if (CellMaterials[i] != null) continue;
+                GameState = GameStateEnum.Invalid;
+                Debug.LogErrorFormat("Cell Material {0} not found", i);
+                result = false;
+                break;
             }
 
             return result;
