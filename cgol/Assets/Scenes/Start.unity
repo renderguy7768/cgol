@@ -2107,11 +2107,9 @@ MonoBehaviour:
     m_LineSpacing: 1
   m_Text: 'Controls:
 
-    LMB on the cube to make it alive/dead
+    LMB on the cube to make it alive/dead only when simulation not started/paused
 
-    Enter/Spacebar to start simulation
-
-    P to pause
+    Enter/Spacebar to start/pause simulation
 
     R to reset Camera back to original position
 
@@ -2119,9 +2117,9 @@ MonoBehaviour:
 
     Scroll to zoom in/out
 
-    Esc to exit in standalone
+    Esc to exit in standalone build
 
-    Press Go to go to simulation scene'
+    Press Go to go to simulation scene if on start scene'
 --- !u!222 &1671022128
 CanvasRenderer:
   m_ObjectHideFlags: 0
