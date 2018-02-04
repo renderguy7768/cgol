@@ -7,8 +7,7 @@ namespace Assets.Scripts
     {
         private Renderer _renderer;
         public int CellState { get; private set; }   
-        [SerializeField]
-        internal Index[] MyNeighbors { get; private set; }
+        public Index[] MyNeighbors { get; private set; }
         public NextCellStateEnum NextCellState { get; set; }
         private bool _isAlive;
         public bool IsAlive
@@ -73,11 +72,11 @@ namespace Assets.Scripts
     }
 
     [System.Serializable]
-    internal struct Index
+    public struct Index
     {
-        internal int W;
-        internal int H;
-        internal int D;
+        public int W;
+        public int H;
+        public int D;
     }
 
 }

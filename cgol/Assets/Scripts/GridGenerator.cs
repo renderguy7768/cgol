@@ -33,7 +33,7 @@ namespace Assets.Scripts
         private static readonly Vector3 CellScale = Vector3.one * 0.8f;
 
         private Cell[,,] _cells;
-        private Vector3Int _offset;
+        //private Vector3Int _offset;
 
         private Coroutine _runCoroutine;
 
@@ -67,9 +67,6 @@ namespace Assets.Scripts
             if (Manager.GameState == GameStateEnum.Wait)
             {
                 _cells = new Cell[Depth, Height, Width];
-                _offset.x = Width - Mathf.FloorToInt(0.5f * (Width - 1) + 1.0f);
-                _offset.y = Height - Mathf.FloorToInt(0.5f * (Height - 1) + 1.0f);
-                _offset.z = Depth - Mathf.FloorToInt(0.5f * (Depth - 1) + 1.0f);
                 PopulateGrid();
                 CameraController.SetupCamera.Invoke(Width, Height, Depth, DistanceMultiplier);
             }
@@ -77,6 +74,13 @@ namespace Assets.Scripts
 
         private void PopulateGrid()
         {
+            var offset = new Vector3Int
+            {
+                x = Width - Mathf.FloorToInt(0.5f * (Width - 1) + 1.0f),
+                y = Height - Mathf.FloorToInt(0.5f * (Height - 1) + 1.0f),
+                z = Depth - Mathf.FloorToInt(0.5f * (Depth - 1) + 1.0f)
+            };
+
             for (var d = 0; d < Depth; d++)
             {
                 for (var h = 0; h < Height; h++)
@@ -91,7 +95,7 @@ namespace Assets.Scripts
 #endif
 
                         var cellTransform = _cells[d, h, w].transform;
-                        cellTransform.position = new Vector3(w - _offset.x, h - _offset.y, d - _offset.z) * (Is3D
+                        cellTransform.position = new Vector3(w - offset.x, h - offset.y, d - offset.z) * (Is3D
                             ? DistanceMultiplier
                             : 1.0f);
                         cellTransform.rotation = Quaternion.identity;
