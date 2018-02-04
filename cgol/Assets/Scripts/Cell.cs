@@ -1,8 +1,10 @@
+using System.Linq;
 using UnityEngine;
 
 /**
  * Make neighbors property
  * Change access modifier of marked fields and maybe make them props
+ * Make things private
  */
 
 namespace Assets.Scripts
@@ -12,15 +14,37 @@ namespace Assets.Scripts
     {
         private const int NumberOfNeighbors = 8;
         private Renderer _renderer;
-        public int CellState { get; private set; }
+        public int CellState; //{ get; private set; } // Make private
 
         //////////////////////////////////////////////////
 
-        public Index[] MyNeighbors; //{ get; private set; }
+        public Index[] MyNeighbors; //{ get; private set; } // Make private
         public Index Me;
         public Index FrontOfMe;
         public Index BackOfMe;
 
+        public bool IsSumSet; //{ get; set; }
+
+        private int _sum;
+        public int Sum
+        {
+            get
+            {
+                if (IsSumSet)
+                {
+                    return _sum;
+                }
+
+                Debug.LogErrorFormat("Trying to get a not set sum. Index: {0}", Me);
+                Manager.GameState = GameStateEnum.Invalid;
+                return -1;
+            }
+            private set
+            {
+                IsSumSet = true;
+                _sum = value;
+            }
+        }
         //////////////////////////////////////////////////
 
         public NextCellStateEnum NextCellState { get; set; }
@@ -121,6 +145,10 @@ namespace Assets.Scripts
 
         }
 
+        public void CalculateCellSum(Cell[,,] cells)
+        {
+            Sum = CellState + MyNeighbors.Sum(neighbor => cells[neighbor.D, neighbor.H, neighbor.W].CellState);
+        }
 
         private void OnMouseDown()
         {
@@ -137,5 +165,9 @@ namespace Assets.Scripts
         public int W;
         public int H;
         public int D;
+        public override string ToString()
+        {
+            return "Cell (" + D + "," + H + "," + W + ")";
+        }
     }
 }

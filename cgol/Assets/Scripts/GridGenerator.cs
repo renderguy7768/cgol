@@ -1,5 +1,4 @@
 using System.Collections;
-using System.Linq;
 using UnityEngine;
 using UnityEngine.Assertions;
 
@@ -33,25 +32,33 @@ namespace Assets.Scripts
         private static readonly Vector3 CellScale = Vector3.one * 0.8f;
 
         private Cell[,,] _cells;
-
+        private int _width, _height, _depth;
+        private bool _is3D;
+        private int _distanceMultiplier;
         private Coroutine _runCoroutine;
 
         private void Awake()
         {
-            Assert.IsTrue(Width > 2, "Width should be greater than 2 for proper simulation to occur");
-            Assert.IsTrue(Height > 2, "Height should be greater than 2 for proper simulation to occur");
-            Assert.IsTrue(Depth > 2, "Depth should be greater than 2 for proper simulation to occur");
+            _width = Width;
+            _height = Height;
+            _depth = Depth;
+            _is3D = Is3D;
+            _distanceMultiplier = DistanceMultiplier;
 
-            if (Width < 3 || Height < 3 || Depth < 3)
+            Assert.IsTrue(_width > 2, "Width should be greater than 2 for proper simulation to occur");
+            Assert.IsTrue(_height > 2, "Height should be greater than 2 for proper simulation to occur");
+            Assert.IsTrue(_depth > 2, "Depth should be greater than 2 for proper simulation to occur");
+
+            if (_width < 3 || _height < 3 || _depth < 3)
             {
                 Manager.GameState = GameStateEnum.Invalid;
                 Debug.LogError("Invalid width or height or depth");
                 return;
             }
 
-            if (!Is3D)
+            if (!_is3D)
             {
-                Depth = 1;
+                _depth = 1;
             }
 
             if (Manager.Initialize())
@@ -63,25 +70,25 @@ namespace Assets.Scripts
         private void Start()
         {
             if (Manager.GameState == GameStateEnum.Invalid) return;
-            _cells = new Cell[Depth, Height, Width];
+            _cells = new Cell[_depth, _height, _width];
             PopulateGrid();
-            CameraController.SetupCamera.Invoke(Width, Height, Depth, DistanceMultiplier);
+            CameraController.SetupCamera.Invoke(_width, _height, _depth, _distanceMultiplier);
         }
 
         private void PopulateGrid()
         {
             var offset = new Vector3Int
             {
-                x = Width - Mathf.FloorToInt(0.5f * (Width - 1) + 1.0f),
-                y = Height - Mathf.FloorToInt(0.5f * (Height - 1) + 1.0f),
-                z = Depth - Mathf.FloorToInt(0.5f * (Depth - 1) + 1.0f)
+                x = _width - Mathf.FloorToInt(0.5f * (_width - 1) + 1.0f),
+                y = _height - Mathf.FloorToInt(0.5f * (_height - 1) + 1.0f),
+                z = _depth - Mathf.FloorToInt(0.5f * (_depth - 1) + 1.0f)
             };
 
-            for (var d = 0; d < Depth; d++)
+            for (var d = 0; d < _depth; d++)
             {
-                for (var h = 0; h < Height; h++)
+                for (var h = 0; h < _height; h++)
                 {
-                    for (var w = 0; w < Width; w++)
+                    for (var w = 0; w < _width; w++)
                     {
 
                         _cells[d, h, w] = Instantiate(Manager.CellPrefab, transform).GetComponent<Cell>();
@@ -91,13 +98,13 @@ namespace Assets.Scripts
 #endif
 
                         var cellTransform = _cells[d, h, w].transform;
-                        cellTransform.position = new Vector3(w - offset.x, h - offset.y, d - offset.z) * (Is3D
-                            ? DistanceMultiplier
+                        cellTransform.position = new Vector3(w - offset.x, h - offset.y, d - offset.z) * (_is3D
+                            ? _distanceMultiplier
                             : 1.0f);
                         cellTransform.rotation = Quaternion.identity;
                         cellTransform.localScale = CellScale;
 
-                        _cells[d, h, w].Initialize(d, h, w, Width, Height, Depth);
+                        _cells[d, h, w].Initialize(d, h, w, _width, _height, _depth);
                     }
                 }
             }
@@ -107,28 +114,35 @@ namespace Assets.Scripts
 
         private void UpdateCells()
         {
-            for (var d = 0; d < Depth; d++)
+            for (var d = 0; d < _depth; d++)
             {
-                for (var h = 0; h < Height; h++)
+                for (var h = 0; h < _height; h++)
                 {
-                    for (var w = 0; w < Width; w++)
+                    for (var w = 0; w < _width; w++)
                     {
-                        var sum = CalculateCellSum(_cells[d, h, w]);
-                        switch (sum)
+                        _cells[d, h, w].CalculateCellSum(_cells);
+                        if (_is3D)
                         {
-                            case 3:
-                                _cells[d, h, w].NextCellState = _cells[d, h, w].IsAlive
-                                    ? NextCellStateEnum.NoChange
-                                    : NextCellStateEnum.MakeAlive;
-                                break;
-                            case 4:
-                                _cells[d, h, w].NextCellState = NextCellStateEnum.NoChange;
-                                break;
-                            default:
-                                _cells[d, h, w].NextCellState = _cells[d, h, w].IsAlive
-                                    ? NextCellStateEnum.MakeDead
-                                    : NextCellStateEnum.NoChange;
-                                break;
+                            
+                        }
+                        else
+                        {
+                            switch (_cells[d, h, w].Sum)
+                            {
+                                case 3:
+                                    _cells[d, h, w].NextCellState = _cells[d, h, w].IsAlive
+                                        ? NextCellStateEnum.NoChange
+                                        : NextCellStateEnum.MakeAlive;
+                                    break;
+                                case 4:
+                                    _cells[d, h, w].NextCellState = NextCellStateEnum.NoChange;
+                                    break;
+                                default:
+                                    _cells[d, h, w].NextCellState = _cells[d, h, w].IsAlive
+                                        ? NextCellStateEnum.MakeDead
+                                        : NextCellStateEnum.NoChange;
+                                    break;
+                            }
                         }
                     }
                 }
@@ -137,11 +151,11 @@ namespace Assets.Scripts
 
         private void ApplyCellUpdates()
         {
-            for (var d = 0; d < Depth; d++)
+            for (var d = 0; d < _depth; d++)
             {
-                for (var h = 0; h < Height; h++)
+                for (var h = 0; h < _height; h++)
                 {
-                    for (var w = 0; w < Width; w++)
+                    for (var w = 0; w < _width; w++)
                     {
                         if (_cells[d, h, w].NextCellState == NextCellStateEnum.MakeDead)
                         {
@@ -151,14 +165,11 @@ namespace Assets.Scripts
                         {
                             _cells[d, h, w].IsAlive = true;
                         }
+
+                        _cells[d, h, w].IsSumSet = false;
                     }
                 }
             }
-        }
-
-        private int CalculateCellSum(Cell cell)
-        {
-            return cell.CellState + cell.MyNeighbors.Sum(neighbor => _cells[neighbor.D, neighbor.H, neighbor.W].CellState);
         }
 
         private void Update()
