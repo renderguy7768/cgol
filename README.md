@@ -17,8 +17,8 @@ Esc to exit in standalone build
 Press Go to go to simulation scene if on start scene
 
 # Highlights
-The camera controller of orthographic camera is highly optimized and provided a good interface.
+The camera controller of orthographic camera is highly optimized and provides a good interface.
 
 # Shortcomings
 The start scene is pretty rudimentary and not optimized at all. It is just provided to toggle certain settings if a build is made.
-For all editor testing please use the main scene directly you can find all the options given on start screen on the cell parent game object under grid generator script. 
+For all editor testing please use the main scene directly you can find all the options given on start scene on the cell parent game object under grid generator script. 
