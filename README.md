@@ -32,7 +32,9 @@ Conway's Game of Life In Unity
 
 # Highlights #
 * The camera controller is highly optimized and provides a good interface.
+* Made my own rule set for 3D.
 * It took me roughly 2 days to get everything done.
 
 # Shortcomings #
 * Project could use a start scene with options if a standalone is to be made.
+* 3D camera initial placement could be improved. 
