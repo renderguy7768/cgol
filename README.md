@@ -13,6 +13,9 @@ Conway's Game of Life In Unity
 3. Any live cell with more than thirteen live neighbors dies, as if by overpopulation.
 4. Any dead cell with eight to twelve live neighbors becomes a live cell, as if by reproduction.
 
+# Important #
+* Please deselect Cell Parent game object when running in editor to avoid fps drop
+
 # Controls #
 * Play with grid generation by modifying the option on Cell Parent game object under GridGenerator.cs script before starting simulation
 * LMB on the cube to make it alive/dead only when simulation not started/paused

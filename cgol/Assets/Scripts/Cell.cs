@@ -1,12 +1,6 @@
 using System.Linq;
 using UnityEngine;
 
-/**
- * Make neighbors property
- * Change access modifier of marked fields and maybe make them props
- * Make things private
- */
-
 namespace Assets.Scripts
 {
     public enum NextCellStateEnum : byte { NoChange, MakeDead, MakeAlive }
@@ -14,19 +8,17 @@ namespace Assets.Scripts
     {
         private const int NumberOfNeighbors = 8;
         private Renderer _renderer;
-        public int CellState; //{ get; private set; } // Make private
+        private int _cellState;
 
-        //////////////////////////////////////////////////
+        private Index[] _myNeighbors;
+        private Index _me;
+        private Index _frontOfMe;
+        private Index _backOfMe;
 
-        public Index[] MyNeighbors; //{ get; private set; } // Make private
-        public Index Me;// delete
-        public Index FrontOfMe;// Make private
-        public Index BackOfMe;// Make private
-
-        public bool IsSumSet; //{ get; set; }
+        public bool IsSumSet { get; set; }
 
         private int _sum;
-        public int Sum
+        private int Sum
         {
             get
             {
@@ -35,19 +27,19 @@ namespace Assets.Scripts
                     return _sum;
                 }
 
-                Debug.LogErrorFormat("Trying to get a not set sum. Index: {0}", Me);
+                Debug.LogErrorFormat("Trying to get a not set sum. Index: {0}", _me);
                 Manager.GameState = GameStateEnum.Invalid;
                 return -1;
             }
-            private set
+            set
             {
                 IsSumSet = true;
                 _sum = value;
             }
         }
-        //////////////////////////////////////////////////
 
         public NextCellStateEnum NextCellState { get; set; }
+
         private bool _isAlive;
         public bool IsAlive
         {
@@ -55,8 +47,8 @@ namespace Assets.Scripts
             set
             {
                 _isAlive = value;
-                CellState = _isAlive ? 1 : 0;
-                _renderer.sharedMaterial = Manager.CellMaterials[CellState];
+                _cellState = _isAlive ? 1 : 0;
+                _renderer.sharedMaterial = Manager.CellMaterials[_cellState];
             }
         }
 
@@ -78,65 +70,65 @@ namespace Assets.Scripts
             _renderer = GetComponent<Renderer>();
             IsAlive = (Random.Range(0, int.MaxValue) & 0x1) == 0;
             NextCellState = NextCellStateEnum.NoChange;
-            MyNeighbors = new Index[NumberOfNeighbors];
-            Me = new Index { W = w, H = h, D = d };
+            _myNeighbors = new Index[NumberOfNeighbors];
+            _me = new Index { W = w, H = h, D = d };
 
             if (is3D)
             {
-                FrontOfMe = new Index { W = w, H = h, D = dMinusOne < 0 ? gridDepthMinusOne : dMinusOne };
-                BackOfMe = new Index { W = w, H = h, D = dPlusOne > gridDepthMinusOne ? 0 : dPlusOne };
+                _frontOfMe = new Index { W = w, H = h, D = dMinusOne < 0 ? gridDepthMinusOne : dMinusOne };
+                _backOfMe = new Index { W = w, H = h, D = dPlusOne > gridDepthMinusOne ? 0 : dPlusOne };
             }
 
-            MyNeighbors[0] = new Index
+            _myNeighbors[0] = new Index
             {
                 H = h,
                 W = wMinusOne < 0 ? gridWidthMinusOne : wMinusOne,
                 D = is3D ? d : 0
             };
 
-            MyNeighbors[1] = new Index
+            _myNeighbors[1] = new Index
             {
                 H = hPlusOne > gridHeightMinusOne ? 0 : hPlusOne,
                 W = wMinusOne < 0 ? gridWidthMinusOne : wMinusOne,
                 D = is3D ? d : 0
             };
 
-            MyNeighbors[2] = new Index
+            _myNeighbors[2] = new Index
             {
                 H = hPlusOne > gridHeightMinusOne ? 0 : hPlusOne,
                 W = w,
                 D = is3D ? d : 0
             };
 
-            MyNeighbors[3] = new Index
+            _myNeighbors[3] = new Index
             {
                 H = hPlusOne > gridHeightMinusOne ? 0 : hPlusOne,
                 W = wPlusOne > gridWidthMinusOne ? 0 : wPlusOne,
                 D = is3D ? d : 0
             };
 
-            MyNeighbors[4] = new Index
+            _myNeighbors[4] = new Index
             {
                 H = h,
                 W = wPlusOne > gridWidthMinusOne ? 0 : wPlusOne,
                 D = is3D ? d : 0
             };
 
-            MyNeighbors[5] = new Index
+            _myNeighbors[5] = new Index
             {
                 H = hMinusOne < 0 ? gridHeightMinusOne : hMinusOne,
                 W = wPlusOne > gridWidthMinusOne ? 0 : wPlusOne,
                 D = is3D ? d : 0
             };
 
-            MyNeighbors[6] = new Index
+            _myNeighbors[6] = new Index
             {
                 H = hMinusOne < 0 ? gridHeightMinusOne : hMinusOne,
                 W = w,
                 D = is3D ? d : 0
             };
 
-            MyNeighbors[7] = new Index
+            _myNeighbors[7] = new Index
             {
                 H = hMinusOne < 0 ? gridHeightMinusOne : hMinusOne,
                 W = wMinusOne < 0 ? gridWidthMinusOne : wMinusOne,
@@ -149,7 +141,7 @@ namespace Assets.Scripts
         {
             if (!IsSumSet)
             {
-                Sum = CellState + MyNeighbors.Sum(neighbor => cells[neighbor.D, neighbor.H, neighbor.W].CellState);
+                Sum = _cellState + _myNeighbors.Sum(neighbor => cells[neighbor.D, neighbor.H, neighbor.W]._cellState);
             }
             return Sum;
         }
@@ -158,10 +150,10 @@ namespace Assets.Scripts
         {
             var result = CalculateCellSum(cells);
 
-            var backCell = cells[BackOfMe.D, BackOfMe.H, BackOfMe.W];
+            var backCell = cells[_backOfMe.D, _backOfMe.H, _backOfMe.W];
             result += backCell.IsSumSet ? backCell.Sum : backCell.CalculateCellSum(cells);
 
-            var frontCell = cells[FrontOfMe.D, FrontOfMe.H, FrontOfMe.W];
+            var frontCell = cells[_frontOfMe.D, _frontOfMe.H, _frontOfMe.W];
             result += frontCell.IsSumSet ? frontCell.Sum : frontCell.CalculateCellSum(cells);
 
             return result;
@@ -176,12 +168,11 @@ namespace Assets.Scripts
         }
     }
 
-    [System.Serializable]
-    public struct Index
+    internal struct Index
     {
-        public int W;
-        public int H;
-        public int D;
+        internal int W;
+        internal int H;
+        internal int D;
         public override string ToString()
         {
             return "Cell (" + D + "," + H + "," + W + ")";
