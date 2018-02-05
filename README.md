@@ -17,7 +17,7 @@ Conway's Game of Life In Unity
 * Please deselect Cell Parent game object when running in editor to avoid fps drop
 
 # Controls #
-* Play with grid generation by modifying the option on Cell Parent game object under GridGenerator.cs script before starting simulation
+* Play with grid generation by modifying the options on Cell Parent game object under GridGenerator.cs script before starting simulation
 * LMB on the cube to make it alive/dead only when simulation not started/paused
 * Enter/Spacebar to start/pause simulation
 * R to reset Camera back to original position
@@ -31,8 +31,12 @@ Conway's Game of Life In Unity
 
 
 # Highlights #
+* Assumed toroidal array when determining neighbors to keep the number of neighbors for each cell same.
+* Optimized algorithm by using egocentric approach of the inner field regarding its neighbors.
 * The camera controller is highly optimized and provides a good interface.
 * Made my own rule set for 3D.
+* Kept cubes in discreet planes so that 3D did not require different calculations for neighbors, you only need to know whose in front and back of you and its neighbors are your neighbors too. 
+* Same data structure i.e. 3 dimensional array is used to maintain cells in 2D and 3D with the difference being that 2D has depth set to 1
 * It took me roughly 2 days to get everything done.
 
 # Shortcomings #
